@@ -11,11 +11,13 @@ import Wiki from './Wiki';
 function App() {
   const { appState } = useAragonApi();
   const { isSyncing } = appState;
+
+  initUprtcl();
   
   return (
     <Main>
       {isSyncing && <SyncIndicator />}
-      <Header primary="Counter"/>
+      <Header primary="Wiki"/>
       <Wiki/>
     </Main>
   );

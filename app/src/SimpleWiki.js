@@ -1,0 +1,224 @@
+import { LitElement, html, property, css } from 'lit-element';
+
+import { ApolloClient } from 'apollo-boost';
+import { moduleConnect } from '@uprtcl/micro-orchestrator';
+import { EveesModule, CREATE_PERSPECTIVE, CREATE_COMMIT, CREATE_ENTITY } from '@uprtcl/evees';
+import { WikisModule } from '@uprtcl/wikis';
+import { ApolloClientModule } from '@uprtcl/graphql';
+
+import { IWikiUpdateProposalParams } from '../types';
+import { checkHome } from '../web3';
+
+export let actualHash = {};
+
+export function SimpleWiki(web3Provider) {
+  
+  class DaoWiki extends moduleConnect(LitElement) {
+
+    get properties () {
+        return {
+            rootHash!: string | null;
+        }
+    }    
+
+    constructor() {
+      super();
+      this.loading = true;
+    }
+
+    WikiPage = () =>
+      !this.loading
+        ? html` <wiki-drawer ref=${this.rootHash}></wiki-drawer> `
+        : html` Loading... `;
+
+    CheckShemeIsValid = () =>
+      this.validScheme()
+        ? this.WikiPage()
+        : html` <h2>Voting machine is wrong. Please try again later</h2> `;
+
+    CreateHome = () => {
+      return html`
+        <div class="container">
+          <div class="header">Initialize your wiki now</div>
+          <a
+            href="javascript:void(0)"
+            class="blueButton"
+            @click="${this.createHome}"
+          >
+            Set home
+          </a>
+        </div>
+      `;
+    };
+
+    async createHome() {
+      //create new wiki and associate it with dao address
+      if (!this.rootHash) {
+        const wikisProvider = this.requestAll(
+          WikisModule.bindings.WikisRemote
+        ).find((provider) => provider.source.startsWith('ipfs'));
+        const eveesEthProvider = this.requestAll(
+          EveesModule.bindings.EveesRemote
+        ).find((provider) => provider.authority.startsWith('eth'));
+
+        try {
+          const client = this.request(ApolloClientModule.bindings.Client);
+
+          const createWiki = await client.mutate({
+            mutation: CREATE_ENTITY,
+            variables: {
+              content: JSON.stringify({
+                title: 'Genesis Wiki',
+                pages: []
+              }),
+              source: wikisProvider.source
+            }
+          });
+
+          const createCommit = await client.mutate({
+            mutation: CREATE_COMMIT,
+            variables: {
+              dataId: createWiki.data.createEntity,
+              parentsIds: [],
+              source: eveesEthProvider.source
+            }
+          });
+
+          const randint = 0 + Math.floor((10000 - 0) * Math.random());
+      
+          const createPerspective = await client.mutate({
+            mutation: CREATE_PERSPECTIVE,
+            variables: {
+              headId: createCommit.data.createCommit.id,
+              context: `genesis-dao-wiki-${randint}`,
+              canWrite: actualHash['dao'],
+              authority: eveesEthProvider.authority
+            }
+          });
+
+          const perspectiveId = createPerspective.data.createPerspective.id;
+
+          this.rootHash = perspectiveId;
+
+          if (this.rootHash) {
+            if (hasHomeProposal) {
+              return this.toSchemePage();
+            } else {
+
+              const proposalValues = {
+                methodName: 'setHomePerspective',
+                methodParams: [this.rootHash],
+              };
+              await dispatcher.createProposal(proposalValues);
+              return this.toSchemePage();
+            }
+
+            // localStorage.setItem(actualHash['dao'], this.rootHash);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      if (!actualHash['wiki']) {
+        this.getRootHash(this.rootHash);
+        this.hasHome = true;
+      }
+
+      this.loading = false;
+    }
+
+    async firstUpdated() {
+      this.addEventListener('evees-proposal-created', async (e) => {
+        const proposalValues = {
+          methodName: 'authorizeProposal',
+          methodParams: [e.detail.proposalId, '1', true],
+        };
+        await dispatcher.createProposal(proposalValues);
+      });
+
+      // const homePerspective = localStorage.getItem(actualHash['dao']);
+      const homePerspective = await checkHome(web3Provider, actualHash['dao']);
+
+      if (homePerspective) {
+        this.hasHome = true;
+        const eveesHttpProvider = this.requestAll(
+          EveesModule.bindings.EveesRemote
+        ).find((provider) => provider.authority.startsWith('http'));
+
+        await eveesHttpProvider.login();
+
+        this.rootHash = homePerspective;
+        this.loading = false;
+      } else {
+        this.hasHome = false;
+      }
+
+      // checking if there is wiki hash in the url
+      if (actualHash['wiki']) {
+        this.rootHash = actualHash['wiki'];
+        // checking if there is a page selected
+        if (actualHash['page']) {
+          this.selectedPage = actualHash['page'];
+        }
+      }
+    }
+
+    render() {
+      return this.hasHome ? this.CheckShemeIsValid() : this.CreateHome();
+    }
+
+    static get styles() {
+        return css`
+          .container {
+            padding: 50px;
+            text-align: center;
+            margin-top: 80px;
+          }
+  
+          .header {
+            font-size: 16px;
+            position: relative;
+            text-align: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            border-top: $gray-border-2;
+            color: $gray-1;
+            font-weight: $bold;
+          }
+  
+          a {
+            color: rgba(6, 118, 255, 1);
+            font-size: 11px;
+            font-family: 'Open Sans';
+            display: inline-block;
+            margin-right: 20px;
+          }
+  
+          a.blueButton {
+            height: 30px;
+            line-height: 30px;
+            font-size: 13px;
+            color: white;
+            background-color: rgba(5, 118, 255, 1);
+            transition: all 0.25s ease;
+            border-radius: 15px;
+            display: inline-block;
+            padding: 0 30px;
+  
+            &:hover {
+              background-color: rgba(19, 46, 91, 1);
+              color: $white;
+            }
+  
+            &.disabled,
+            &disabled:hover {
+              background-color: rgba(200, 200, 200, 0.5);
+              border: 1px solid rgba(200, 200, 200, 1);
+              cursor: not-allowed;
+            }
+          }
+        `;
+      }
+  }
+  return DaoWiki;
+}
