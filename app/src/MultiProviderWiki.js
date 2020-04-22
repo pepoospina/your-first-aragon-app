@@ -38,8 +38,8 @@ export class MultiProviderWikiModule extends MicroModule {
   }
 }
 
-export function loadModule([ethEvees, httpEvees], httpEvees) {
-  const wikiModule = new MultiProviderWikiModule([ethEvees, httpEvees], httpEvees);
+export async function loadModule(eveesRemotes, defaultRemote) {
+  const wikiModule = new MultiProviderWikiModule(eveesRemotes, defaultRemote);
   const orchestrator = new MicroOrchestrator();
   await orchestrator.loadModule(wikiModule);
 }
