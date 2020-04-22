@@ -7,12 +7,13 @@ import {
 } from "@aragon/ui";
 
 import Wiki from './Wiki';
+import { initUprtcl } from './initUprtcl';
 
-function App() {
+async function App() {
   const { appState } = useAragonApi();
   const { isSyncing } = appState;
 
-  initUprtcl();
+  await initUprtcl();
   
   return (
     <Main>

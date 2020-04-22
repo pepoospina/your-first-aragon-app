@@ -3,7 +3,7 @@ import React from 'react'
 function Wiki() {
   return (
   <module-container>
-    <simple-wiki/>
+    <wiki-drawer/>
   </module-container>)
 }
 
