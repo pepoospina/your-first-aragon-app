@@ -1,4 +1,4 @@
-import { MicroModule } from '@uprtcl/micro-orchestrator';
+import { MicroModule, MicroOrchestrator, i18nextBaseModule } from '@uprtcl/micro-orchestrator';
 
 import { LensesModule } from '@uprtcl/lenses';
 import { DocumentsModule } from '@uprtcl/documents';
@@ -18,6 +18,7 @@ export class MultiProviderWikiModule extends MicroModule {
   }
 
   constructor(eveesRemotes, defaultRemote ) {
+    super();
     this.evees = new EveesModule(eveesRemotes, defaultRemote);
     this.documents = new DocumentsModule();
     this.wikis = new WikisModule();
@@ -38,7 +39,7 @@ export class MultiProviderWikiModule extends MicroModule {
   }
 }
 
-export async function loadModule(eveesRemotes, defaultRemote) {
+export async function loadWikiModule(eveesRemotes, defaultRemote) {
   const wikiModule = new MultiProviderWikiModule(eveesRemotes, defaultRemote);
   const orchestrator = new MicroOrchestrator();
   await orchestrator.loadModule(wikiModule);

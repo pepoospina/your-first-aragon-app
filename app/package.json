@@ -41,5 +41,8 @@
     "watch": "npm run watch:script",
     "sync-assets": "copy-aragon-ui-assets ../dist && copyfiles -u 1 './public/**/*' ../dist",
     "start": "npm run sync-assets && npm run watch:script & npm run devserver"
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
 }

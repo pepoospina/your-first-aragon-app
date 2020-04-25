@@ -5,7 +5,7 @@ import { EthereumConnection } from '@uprtcl/ethereum-provider';
 
 import { loadWikiModule } from './MultiProviderWiki';
 
-export async function initUprtcl() {
+export const initUprtcl = async () => {
   const c1host = 'http://localhost:3100/uprtcl/1';
   const ethHost = '';
   
@@ -20,6 +20,7 @@ export async function initUprtcl() {
   const httpEvees = new EveesHttp(c1host, httpConnection, ethConnection, httpCidConfig);
   const ethEvees = new EveesEthereum(ethConnection, ipfsConfig, ipfsCidConfig);
 
+  console.log('[WIKI-UPRTCL] loadWikiModule');
   await loadWikiModule([ethEvees, httpEvees], httpEvees);
 
   console.log(orchestrator);

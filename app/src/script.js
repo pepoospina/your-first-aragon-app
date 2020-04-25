@@ -2,6 +2,8 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 import Aragon, { events } from "@aragon/api";
 
+import { initUprtcl } from './initUprtcl';
+
 const app = new Aragon();
 
 app.store(
@@ -37,7 +39,10 @@ app.store(
  ***********************/
 
 function initializeState() {
-  return async cachedState => {
+  return async (cachedState) => {
+
+    await initUprtcl();
+
     return {
       ...cachedState,
       count: await getValue()
