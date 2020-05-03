@@ -41,8 +41,6 @@ app.store(
 function initializeState() {
   return async (cachedState) => {
 
-    await initUprtcl();
-
     return {
       ...cachedState,
       count: await getValue()

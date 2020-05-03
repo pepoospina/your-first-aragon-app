@@ -3,8 +3,6 @@ import { EveesEthereum, EveesHttp } from '@uprtcl/evees';
 import { HttpConnection } from '@uprtcl/http-provider';
 import { EthereumConnection } from '@uprtcl/ethereum-provider';
 
-import { loadWikiModule } from './MultiProviderWiki';
-
 export const initUprtcl = async () => {
   const c1host = 'http://localhost:3100/uprtcl/1';
   const ethHost = '';
@@ -20,8 +18,21 @@ export const initUprtcl = async () => {
   const httpEvees = new EveesHttp(c1host, httpConnection, ethConnection, httpCidConfig);
   const ethEvees = new EveesEthereum(ethConnection, ipfsConfig, ipfsCidConfig);
 
-  console.log('[WIKI-UPRTCL] loadWikiModule');
-  await loadWikiModule([ethEvees, httpEvees], httpEvees);
+  const evees = new EveesModule([ethEvees, httpEvees], httpEvees);
 
-  console.log(orchestrator);
+  const documents = new DocumentsModule();
+  const wikis = new WikisModule();
+
+  const orchestrator = new MicroOrchestrator();
+  await orchestrator.loadModules([
+    new i18nextBaseModule(),
+    new ApolloClientModule(),
+    new CortexModule(),
+    new DiscoveryModule([httpEvees.casID]),
+    new LensesModule(),
+    new AccessControlModule(),
+    evees,
+    documents,
+    wikis
+  ]);
 };

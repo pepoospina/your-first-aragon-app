@@ -10,6 +10,11 @@ const reducer = state => {
   return state;
 };
 
+(async function () {
+  await initUprtcl();
+})();
+
+
 ReactDOM.render(
   <AragonApi reducer={reducer}>
     <App />
